@@ -3,66 +3,90 @@
 from PIL import Image
 import base64
 
-img = Image.open('/home/arek/projects/310btc/challenge.png')
+def read_last_bit_of_row(data, row, width):
+    red = []
+    green = []
+    blue = []
+    alpha = []
+    for col in range(width):
+        r = bin(data[col, row][0])[-1]
+        g = bin(data[col, row][1])[-1]
+        b = bin(data[col, row][2])[-1]
+        a = bin(data[col, row][3])[-1]
+        red.append(r)
+        green.append(g)
+        blue.append(b)
+        alpha.append(a)
+    return(red, green, blue, alpha)
+
+def read_last_bit_of_column(data, col, height):
+    red = []
+    green = []
+    blue = []
+    alpha = []
+    for row in range(height):
+        r = bin(data[col, row][0])[-1]
+        g = bin(data[col, row][1])[-1]
+        b = bin(data[col, row][2])[-1]
+        a = bin(data[col, row][3])[-1]
+        red.append(r)
+        green.append(g)
+        blue.append(b)
+        alpha.append(a)
+    return(red, green, blue, alpha)
+
+def to_hex(int_number):
+    return hex(int_number)[2:]
+
+def to_bytes(int_number):
+    return bytes.fromhex(to_hex(int_number))
+
+def negate(int_number):
+    to_bin = bin(int_number)[2:]
+    to_bin = to_bin.replace('0', '|')
+    to_bin = to_bin.replace('1', '0')
+    to_bin = to_bin.replace('|', '1')
+    return int(to_bin, 2)
+
+img = Image.open('/home/afratczak/projects/310btc/challenge.png')
 data = img.load()
 img.close()
 
-red = []
-green = []
-blue = []
-alpha = []
-
 width = 2944
 height = 1912
-y=310
-for x in range(width):
-    r = bin(data[x, y][0])[-1]
-    g = bin(data[x, y][1])[-1]
-    b = bin(data[x, y][2])[-1]
-    a = bin(data[x, y][3])[-1]
-    red.append(r)
-    green.append(g)
-    blue.append(b)
-    alpha.append(a)
-red_channel = ''.join(red)
-green_channel = ''.join(green)
-blue_channel = ''.join(blue)
-alpha_channel = ''.join(alpha)
 
-print("r:", red_channel)
-print("rev r:", red_channel[::-1])
-print("g:", green_channel)
-print("b:", blue_channel)
-print("a:", alpha_channel)
+red, green, blue, alpha = read_last_bit_of_row(data, 310, width)
 
-xor = bin((
-    int(red_channel[::-1], 2)# ^
-    # int(green_channel, 2) ^
-    # int(blue_channel, 2) ^
-    # int(alpha_channel, 2)
-    ))[2:]
-print("r^g^b^a", xor)
-print(bytes.fromhex(hex(int(xor,2))[2:]))
-xor = xor.replace('0', '|')
-xor = xor.replace('1', '0')
-xor = xor.replace('|', '1')
-print("~(r^g^b^a):", xor)
-print(bytes.fromhex(hex(int(xor,2))[2:]))
+red_channel_x = ''.join(red)
+green_channel_x = ''.join(green)
+blue_channel_x = ''.join(blue)
+alpha_channel_x = ''.join(alpha)
+#print("r_x:", red_channel_x)
+#print("g_x:", green_channel_x)
+#print("b_x:", blue_channel_x)
+#print("a_x:", alpha_channel_x)
 
-# b64 = base64.b64decode(decoded_hex)
-# print(b64)
+red, green, blue, alpha = read_last_bit_of_column(data, 310, height)
+
+red_channel_y = ''.join(red)
+green_channel_y = ''.join(green)
+blue_channel_y = ''.join(blue)
+alpha_channel_y = ''.join(alpha)
+#print("r_y:", red_channel_y)
+#print("g_y:", green_channel_y)
+#print("b_y:", blue_channel_y)
+#print("a_y:", alpha_channel_y)
+
+xor = (
+    int(red_channel_x[:width], 2) ^
+    int(alpha_channel_x[:width], 2)
+)
+
+print(to_bytes(xor))
+print(to_bytes(negate(xor)))
+
+b64 = base64.b64decode(to_bytes(negate(xor)))
+print(b64)
 
 # with open('/home/arek/projects/310btc/alphachannelfile', 'wb') as fout:
 #     fout.write(decoded_hex)
-
-#hash
-#273e2b95648fd3cbad0d7fe3ed820e783c0b12fdbe29b57bfb2d1f243d92b1a5
-
-#0.1 KzkZxdhRGxB7eX4u1skXkfJ7VB8JfPp7Nfos3jiF7PQUNMh2SHDE
-#69630650804510e161cf977024ea41fe630942bb6b9429c804b15ef7e865111801
-
-#0.2 KxPEUpQ5BE75UGRUVjNmf8dQuWsmP9jqL3FUUjavdRW69MEcmg6C
-#22bc6dc8b10ca296ccffcab76ade66eb0e3224b334c212098cbe8491f172caeb01
-
-#U2FsdGVkX19Q3I//VCH0U3cVtITZ3ckILJnUcdPX3Gs5qjdF1UjZ3mAftGivtFYD\nN5ZCSkBynnVqBawl4p8wKO0O8zI6D0A1+VEVCUyEvEeNoUfGcS0El9d93vsPxbg7\nD5avufQsScgsk3QEtq9/M4Do32OKFeq00/3NrxWOsMmh3AXmDzuuZ0qmZaI7re16\nFcXIrmPPiQDOHRc7wt0ng6qLiNz7VqESRTdxPOahKFRkWT8sT+Ur2y+2iZ2LEaxN\nM7UZqcPwYgm6FoKOVjnqdeg30R27jc6AoFPyRZ2g8+EJMp3n/pf94oSCLEWkc0os\njH9DqbM6DUptu3HJbAVwXQ==
-#Ur2y+2iZ2LEaxN\nM7UZqcPwYgm6FoKOVjnqdeg30R27jc6AoFPyRZ2g8+EJMp3n/pf94oSCLEWkc0os\njH9DqbM6DUptu3HJbAVwXQ==
